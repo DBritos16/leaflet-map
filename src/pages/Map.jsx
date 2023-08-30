@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { FeatureGroup, MapContainer, Marker, Polygon, Popup, TileLayer } from 'react-leaflet'
 import { polygon, booleanPointInPolygon, booleanWithin, intersect } from '@turf/turf';
 import { EditControl } from 'react-leaflet-draw';
@@ -6,73 +6,8 @@ import { useEffect, useState } from 'react';
 
 
 const Map = () => {
-    /* const [polygons, setPolygons] = useState([[
-        [
-            51.52604744889203,
-            -0.07733345031738283
-        ],
-        [
-            51.516754845636456,
-            -0.0716686248779297
-        ],
-        [
-            51.51184074882069,
-            -0.0757884979248047
-        ],
-        [
-            51.51867760878029,
-            -0.08385658264160158
-        ],
-        [
-            51.52604744889203,
-            -0.07733345031738283
-        ]
-    ],
-    [
-        [
-            51.528183411474586,
-            -0.08836269378662111
-        ],
-        [
-            51.52556684350165,
-            -0.09316921234130861
-        ],
-        [
-            51.52807661572529,
-            -0.09831905364990236
-        ],
-        [
-            51.53010569212588,
-            -0.0956583023071289
-        ],
-        [
-            51.528183411474586,
-            -0.08836269378662111
-        ]
-    ],
-    [
-        [
-            51.52871738646354,
-            -0.10269641876220705
-        ],
-        [
-            51.524765823244685,
-            -0.0954866409301758
-        ],
-        [
-            51.51547295844543,
-            -0.11145114898681642
-        ],
-        [
-            51.52220246372816,
-            -0.11299610137939453
-        ],
-        [
-            51.52871738646354,
-            -0.10269641876220705
-        ]
-    ]
-]); */
+
+    const mapRef = useRef(null);
 
     const area = [
         [-26.080442640853118, -58.27608436346055],
@@ -180,7 +115,14 @@ const Map = () => {
             };
         } return true;
     }
-  
+
+    const handleEdited = (e)=>{
+        const {layer} = e;
+
+        console.log(e);
+    }
+
+
     const handleDrawCreated = (e) => {
       const { layer } = e;
       const newPolygon = layer.getLatLngs()[0].map((latLng) => [latLng.lat, latLng.lng]);
@@ -190,30 +132,30 @@ const Map = () => {
       if(booleanWithin(convertToGeoJson(newPolygon), convertToGeoJson(area))){
 
         if(validateOtherPolygons(newPolygon)){
-            setPolygons((prevPolygons) => [...prevPolygons, newPolygon]);
-            return alert('No intersecta')
+            console.log(layer);
+            return setPolygons((prevPolygons) => [...prevPolygons, newPolygon]);
         } else {
-            return alert('Intersecta')
+            return layer.remove()
         }
       } else {
-        e.layer.remove();
-        return alert('Debe estar dentro del area');
+            return layer.remove();
       } 
   
     };
 
-  
+
   
     return (
       <>
   
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <MapContainer maxBounds={area} center={[-26.080442640853118, -58.27608436346055]} zoom={17}>
+          <MapContainer center={[-26.080442640853118, -58.27608436346055]} ref={mapRef} zoom={17}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
   
             <FeatureGroup>
               <EditControl
                 position="topright"
+                onEdited={handleEdited}
                 onCreated={handleDrawCreated}
                 draw={{
                   marker: false,
@@ -224,12 +166,12 @@ const Map = () => {
                   polygon: true,
                 }}
               />
-            </FeatureGroup>
-            <Polygon positions={area} color='blue' />
-
             {polygons.map((i, k)=>(
                 <Polygon key={k} color='green' positions={i}/>
-            ))}
+                ))}
+            </FeatureGroup>
+                <Polygon positions={area} color='blue' />
+
           </MapContainer>
         </div>
       </>
