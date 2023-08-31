@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 
 const Map = () => {
-    /* const [polygons, setPolygons] = useState([[
+    /* const [parcelas, setParcelas] = useState([[
         [
             51.52604744889203,
             -0.07733345031738283
@@ -82,73 +82,37 @@ const Map = () => {
         [-26.080442640853118, -58.27608436346055]
     ]
   
-      const [polygons, setPolygons] = useState([
-        [
-            [
-                -26.080490822849274,
-                -58.27607899904252
-            ],
-            [
-                -26.080760641661243,
-                -58.27553719282151
-            ],
-            [
-                -26.081420731489956,
-                -58.27604144811631
-            ],
-            [
-                -26.081146096028014,
-                -58.276508152484894
-            ],
-            [
-                -26.080490822849274,
-                -58.27607899904252
+      const [parcelas, setParcelas] = useState([
+        {
+            id: 1,
+            geoUbicacion: [
+                [ -26.080490822849274, -58.27607899904252],
+                [ -26.080760641661243, -58.27553719282151],
+                [ -26.081420731489956, -58.27604144811631],
+                [ -26.081146096028014, -58.276508152484894],
+                [ -26.080490822849274, -58.27607899904252 ]
             ]
-        ],
-        [
-            [
-                -26.08082809626704,
-                -58.27551573514939
+        },
+        {
+            id: 2,
+            geoUbicacion: [
+                [ -26.08082809626704, -58.27551573514939],
+                [ -26.08142554965021, -58.275907337665565],
+                [ -26.082143453310778, -58.27551037073136],
+                [ -26.081146096028014, -58.27482372522355 ],
+                [ -26.08082809626704, -58.27551573514939]
             ],
-            [
-                -26.08142554965021,
-                -58.275907337665565
-            ],
-            [
-                -26.082143453310778,
-                -58.27551037073136
-            ],
-            [
-                -26.081146096028014,
-                -58.27482372522355
-            ],
-            [
-                -26.08082809626704,
-                -58.27551573514939
+        },
+        {
+            id: 3,
+            geoUbicacion: [
+                [ -26.08145445860753, -58.2761111855507],
+                [ -26.081574912519518, -58.275896608829505],
+                [ -26.08210009012738, -58.27623456716538],
+                [ -26.081970000480755, -58.276513516902924],
+                [ -26.08145445860753, -58.2761111855507]
             ]
-        ],
-        [
-            [
-                -26.08145445860753,
-                -58.2761111855507
-            ],
-            [
-                -26.081574912519518,
-                -58.275896608829505
-            ],
-            [
-                -26.08210009012738,
-                -58.27623456716538
-            ],
-            [
-                -26.081970000480755,
-                -58.276513516902924
-            ],
-            [
-                -26.08145445860753,
-                -58.2761111855507
-            ]
-        ]
+        }
     ]);
 
       
@@ -172,9 +136,9 @@ const Map = () => {
         }
     };
 
-    const validateOtherPolygons = (newPolygon)=>{
-        for (let i = 0; i < polygons.length; i++) {
-            const intersected = intersect(convertToGeoJson(newPolygon), convertToGeoJson(polygons[i]));
+    const validateOtherparcelas = (newPolygon)=>{
+        for (let i = 0; i < parcelas.length; i++) {
+            const intersected = intersect(convertToGeoJson(newPolygon), convertToGeoJson(parcelas[i].geoUbicacion));
             if(intersected !== null){
                 return false;
             };
@@ -189,11 +153,11 @@ const Map = () => {
       
       if(booleanWithin(convertToGeoJson(newPolygon), convertToGeoJson(area))){
 
-        if(validateOtherPolygons(newPolygon)){
-            setPolygons((prevPolygons) => [...prevPolygons, newPolygon]);
-            return alert('No intersecta')
+        if(validateOtherparcelas(newPolygon)){
+            setParcelas((prevparcelas) => [...prevparcelas, {id: 5, geoUbicacion: newPolygon}]);
         } else {
-            return alert('Intersecta')
+            e.layer.remove();
+            return alert('El area que intenta delimitar colisiona con una parcela ya creada')
         }
       } else {
         e.layer.remove();
@@ -202,7 +166,26 @@ const Map = () => {
   
     };
 
-  
+
+    const handleEdit = (e) => {
+        const { layers } = e;
+        layers.eachLayer((layer) => {
+          const editedPolygon = layer.getLatLngs()[0].map((latLng) => [latLng.lat, latLng.lng]);
+          const updatedparcelas = parcelas.map((polygon, index) => (index === layer._leaflet_id ? editedPolygon : polygon));
+          console.log(editedPolygon);
+          setParcelas(updatedparcelas);
+        });
+      };
+
+      const handleDelete = (e) => {
+        const { layers } = e;
+        layers.eachLayer((layer) => {
+            console.log('elimnado');
+          const updatedparcelas = parcelas.filter((polygon, index) => index !== layer._leaflet_id);
+          setParcelas(updatedparcelas);
+        });
+      };
+
   
     return (
       <>
@@ -210,26 +193,31 @@ const Map = () => {
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <MapContainer maxBounds={area} center={[-26.080442640853118, -58.27608436346055]} zoom={17}>
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                <Polygon positions={area} color='blue' />
   
             <FeatureGroup>
               <EditControl
-                position="topright"
+                position="topleft"
+                
                 onCreated={handleDrawCreated}
+                onEdited={handleEdit}
+                onDeleted={handleDelete}
                 draw={{
-                  marker: false,
-                  circle: false,
-                  circlemarker: false,
-                  polyline: false,
-                  rectangle: false,
-                  polygon: true,
+                    marker: false,
+                    circle: false,
+                    circlemarker: false,
+                    polyline: false,
+                    rectangle: false,
+                    polygon: true,
                 }}
               />
-            </FeatureGroup>
-            <Polygon positions={area} color='blue' />
-
-            {polygons.map((i, k)=>(
-                <Polygon key={k} color='green' positions={i}/>
+            {parcelas.map((i, k)=>(
+                <Polygon key={k} color='green' positions={i.geoUbicacion}>
+                    <Popup>Hola {i.id}</Popup>
+                </Polygon>
             ))}
+            </FeatureGroup>
+
           </MapContainer>
         </div>
       </>
