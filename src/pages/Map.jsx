@@ -171,9 +171,15 @@ const Map = () => {
         const { layers } = e;
         layers.eachLayer((layer) => {
           const editedPolygon = layer.getLatLngs()[0].map((latLng) => [latLng.lat, latLng.lng]);
-          const updatedparcelas = parcelas.map((polygon, index) => (index === layer._leaflet_id ? editedPolygon : polygon));
+
+          if(validateOtherparcelas(editedPolygon)){
+            return alert('No intersecta');
+          } else {
+            alert('el area intersecta con otra parcela')
+          }
+          /* const updatedparcelas = parcelas.map((polygon, index) => (index === layer._leaflet_id ? editedPolygon : polygon));
           console.log(editedPolygon);
-          setParcelas(updatedparcelas);
+          setParcelas(updatedparcelas); */
         });
       };
 
